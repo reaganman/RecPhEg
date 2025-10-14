@@ -7,7 +7,57 @@ import pandas as pd
 import ast
 import os
 from collections import defaultdict
+from BCBio import GFF
 
+
+
+def which_genes():
+    """
+    Determine which genes (CDSs) are found in each selected fragment
+    and calculate pairwise similarity? (metric?) with homologs on
+     sibling frags if present
+    """
+    pass
+
+def split_gff(gff_path, out_path, frag_start, frag_stop, frag_num):
+    """
+    Create a new GFF file containing only features completely enclosed
+    between frag_start and frag_stop, and write only custom header lines.
+    Keeps original source, score, and phase.
+    """
+    filtered_rows = []
+    seq_id = None
+
+    # --- Read the original GFF lines manually ---
+    with open(gff_path) as f:
+        for line in f:
+            if line.startswith("#"):  # skip header/meta lines
+                continue
+            parts = line.strip().split("\t")
+            if len(parts) != 9:
+                continue  # skip malformed lines
+
+            seqid, source, ftype, start, end, score, strand, phase, attributes = parts
+            start, end = int(start), int(end)
+
+            # keep only features fully inside fragment range
+            if start >= frag_start and end <= frag_stop:
+                filtered_rows.append((seqid, source, ftype, start, end, score, strand, phase, attributes))
+                seq_id = seqid
+
+    # --- Write new filtered GFF ---
+    with open(out_path, "w") as out_handle:
+        # Custom header lines only
+        out_handle.write("##gff-version 3\n")
+        out_handle.write(
+            f"##sequence-region {seq_id} {frag_start} {frag_stop} fragment={frag_num}\n"
+        )
+
+        # Write filtered feature lines exactly as in original
+        for row in filtered_rows:
+            out_handle.write("\t".join(map(str, row)) + "\n")
+
+    print(f"✅ Filtered GFF written to {out_path}")
 
 
 def make_frags(chosen_seqs, n_frags, topology, overlaps):
@@ -74,10 +124,10 @@ def make_frags(chosen_seqs, n_frags, topology, overlaps):
             frag_record = SeqRecord(
                 Seq(frag_seq),
                 id=frag_id,
-                description=f"Fragment {i+1} from {seq_id} ({start}:{end})"
+                description=f"Fragment {i+1} from {seq_id} ({start+1}:{end})"
             )
             fragments[i].append(frag_record)
-            genome_boundaries.append((start, end))
+            genome_boundaries.append((start+1, end))
 
         boundaries[seq_id] = genome_boundaries
 
@@ -150,8 +200,10 @@ def design_primers_for_fragment(frag_record, target_tm=60, tm_tol=1, max_primer_
 def main():
     parser = argparse.ArgumentParser(description="Generate assembly fragments from user indicated genomes with user indicated overlaps")
     parser.add_argument("--genomes", required=True, help="Combined genome FASTA")
+    parser.add_argument("--gff_dir", required=True, help="Path to directory with GFFs from pharroka output")
     parser.add_argument("--kmers", required=True, help="shared_kmers.csv from find_assembly_overlaps.sh")
-    parser.add_argument("--outdir", required=True, help="Output directory to save fragment FASTAS")
+    parser.add_argument("--fasta_outdir", required=True, help="Output directory to save fragment FASTAS")
+    parser.add_argument("--gff_outdir", required=True, help="Output directory to save fragment GFFs")
     args = parser.parse_args()
 
 
@@ -236,15 +288,25 @@ def main():
         print("\n✅ All chosen overlaps exist and are shared among all chosen accessions!")
 
     # --- make fragments and save FASTA for each group of frags (frag1 from each genome) ---
-
+    # make fragments
     fragments, boundaries = make_frags(chosen_seqs, n_frags, topology, overlaps)
 
+    # make GFF for each fragment
     # make sure output directory exists
-    os.makedirs(args.outdir, exist_ok=True)
+    os.makedirs(args.gff_outdir, exist_ok=True)
+    for seq_id, frags in boundaries.items():
+        gff_path = os.path.join(args.gff_dir, f"{seq_id}.gff")
+        for frag_num, (frag_start, frag_stop) in enumerate(frags, start=1):
+            out_path = os.path.join(args.gff_outdir, f"{seq_id}_frag{frag_num}.gff")
+            split_gff(gff_path, out_path, frag_start, frag_stop, frag_num)
+
+
 
     # write each fragment group to its own FASTA
+    # make sure output directory exists
+    os.makedirs(args.fasta_outdir, exist_ok=True)
     for i, frag_group in enumerate(fragments, start=1):
-        out_path = os.path.join(args.outdir, f"fragment_{i}.fasta")
+        out_path = os.path.join(args.fasta_outdir, f"fragment_{i}.fasta")
         SeqIO.write(frag_group, out_path, "fasta")
         print(f"Wrote {out_path}")
 
