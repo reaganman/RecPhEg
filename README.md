@@ -8,7 +8,7 @@
 
 ## 🚀 Overview
 
-RecPhEg can be used for designing interchangeable genome fragments wigth shared overlaps from related phage genomes.  
+CombPhage can be used for designing interchangeable genome fragments wigth shared overlaps from related phage genomes.  
 
 The pipeline currently requires a **combined FASTA file** containing the complete genome sequences of related phages, and a minimum overlap length.
 
@@ -16,7 +16,7 @@ The pipeline currently requires a **combined FASTA file** containing the complet
 
 ## 🧩 Workflow
 
-The RecPhEg workflow is as follows:
+The CombPhage workflow is as follows:
 
 1. **Call Coding Sequences (CDSs)**  
    Identify putative coding regions across all input genomes using pharokka and assign each to PHROG categrory with mmseqs2 where possible.
