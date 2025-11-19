@@ -1,6 +1,6 @@
-# 🧬 RecPhEg: Recombinatorial Phage Engineering
+# 🧬 CombPhage: Recombinatorial Phage Engineering
 
-**RecPhEg** is an **interactive pipeline** for designing **Re**combinatorial **Ph**age **E**n**g**ineering assemblies.
+**CombPhage** is an pipeline for designing recombinatorial phage engineering experiments.
 
 **NOTE: THIS PIPELINE IS IN DEVELOPMENT AND HAS NOT BEEN TESTED IN-VITRO**
 
