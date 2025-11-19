@@ -8,9 +8,9 @@
 
 ## 🚀 Overview
 
-RecPhEg can be used for designing interchangeable genome fragments from related phage genomes.  
+RecPhEg can be used for designing interchangeable genome fragments wigth shared overlaps from related phage genomes.  
 
-The pipeline currently requires **interactive input** and operates on a **combined FASTA file** containing the complete genome sequences of related phages.
+The pipeline currently requires a **combined FASTA file** containing the complete genome sequences of related phages, and a minimum overlap length.
 
 ---
 
@@ -19,50 +19,45 @@ The pipeline currently requires **interactive input** and operates on a **combin
 The RecPhEg workflow is as follows:
 
 1. **Call Coding Sequences (CDSs)**  
-   Identify coding regions across all input genomes.
+   Identify putative coding regions across all input genomes using pharokka and assign each to PHROG categrory with mmseqs2 where possible.
 
 2. **Cluster Homologous CDSs**  
-   Group homologous genes to identify shared and unique genomic elements.
+   Group homologous CDSs using mmseqs2 with **--cluster-mode 0 --cov-mode 1 -c 0.8 -s 7.5 --min-seq-id 0.25**
 
 3. **Identify Candidate Overlaps**  
    Detect potential overlaps within CDS clusters.  
    Overlaps must include a **start** or **stop codon**.
 
-4. **Filter Candidate Overlaps**  
-   Apply sequence and positional filters to remove unsuitable overlaps.
+4. **Filter/Optimize Candidate Overlaps**  
+   Remove repetatve and low GC sequences and those smaller that the size threshold.
 
-5. **Determine Optimal Overlap Combinations**  
-   Compute the most suitable overlap set for a specified number of fragments (**N**) and maximum fragment size (**max_frag_size**).
-
-6. **Build and Analyze Fragments**  
-   Construct fragment assemblies based on optimal overlap sets.  
-   Design and evaluate **PCR primers** for fragment synthesis and assembly.
+5. **Make output diagram**
+   Color code CDSs with suitable overlaps containing start or stop codons
 
 ---
 
-## 📥 Input Requirements
+## 📥 Input 
 
-- A **combined FASTA file** containing complete genome sequences of related phages.
+- **Combined FASTA file** containing complete genome sequences of related phages.
+- **Minimum Overlap size**
 
 ---
 
 ## ⚙️ Output
 
-- Optimal fragment assemblies  
-- Sequence and structural analysis of designed fragments  
-- PCR primer designs for downstream validation
-
+- Optimized overlap sequences  
+- Diagrams showing overlaps and pharokka annotations
 ---
 
-## 🧠 Notes
+## 🧠 Extra Scripts
 
-- The pipeline is **interactive** (automation features are under development).  
-- Intended for **comparative phage genomics** and **rational recombination design**.
+- **fetch_accessions.py** Create a FASTA file for each value in the accession column of input csv
+
 
 ---
 
 ## 📅 Future Work
+- Test overlap selection stategy in-vitro
+- Use blastn to identify interchangeable fragments across NCBI nt databases based on overlap selection
+- Automate overlap selection? 
 
-- Full automation of the interactive steps  
-- Integration of codon optimization and assembly simulation modules  
-- Expansion to support metagenomic phage datasets
